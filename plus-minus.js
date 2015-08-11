@@ -1,4 +1,3 @@
-"use strict";
 var PlusMinus = (function () {
     function PlusMinus(plusMinusObj) {
         this.counter = 0;
@@ -14,6 +13,7 @@ var PlusMinus = (function () {
         this.sitetrackingkey = plusMinusObj.siteTrackingKey;
         this.callback = plusMinusObj.cb;
         this.output = this.values[0];
+        this.pmInit = false;
         this.renderComponent();
         this.updateOutput();
         this.initEventHandlers();
@@ -21,46 +21,56 @@ var PlusMinus = (function () {
     }
     PlusMinus.prototype.renderComponent = function () {
         var descriptionHtml;
-        if (this.descriptionText !== '' || this.iconClassNames !== '') {
+        if (this.descriptionText && this.descriptionText !== '' || this.iconClassNames && this.iconClassNames !== '') {
             descriptionHtml = '<div class="plus-minus-description">';
             if (this.iconClassNames !== '') {
-                descriptionHtml += '<i class="icon icon-custom ' + this.iconClassNames + '"></i>';
+                descriptionHtml += '<i class="' + this.iconClassNames + '"></i>';
             }
-            if (this.descriptionText !== '') {
+            if (this.descriptionText && this.descriptionText !== '') {
                 descriptionHtml += '<p class="plus-minus-description-text txt-default">' + this.descriptionText + '</p>';
             }
             descriptionHtml += '</div>';
         }
-        this.pmInstance.insertAdjacentHTML('afterend', descriptionHtml);
         var componentHtml;
-        componentHtml = '<a href="#" class="plus-minus-button plus-minus-button-minus"><i class="icon icon-minus">-</i></a><input class="plus-minus-output" type="text" name="" value="" readonly="readonly"><a href="#" class="plus-minus-button plus-minus-button-plus"><i class="icon icon-plus">+</i></a>';
-        this.pmInstance.innerHTML = componentHtml;
+        componentHtml = '<div class="plus-minus-component"><a href="#" class="plus-minus-button plus-minus-button-minus"><i class="icon icon-minus"></i></a><input class="plus-minus-output" type="text" name="" value="" readonly="readonly"><a href="#" class="plus-minus-button plus-minus-button-plus"><i class="icon icon-plus"></i></a></div>';
+        var wrapperHtml = '<div class="plus-minus">' + componentHtml + descriptionHtml + '</div>';
+        this.pmInstance.innerHTML = wrapperHtml;
     };
     PlusMinus.prototype.initEventHandlers = function () {
         var _this = this;
         var btn_minus = this.pmInstance.querySelector('.plus-minus-button-minus');
-        btn_minus.onclick = function (e) {
-            console.log('click minus');
-            _this.decrement();
-        };
+        btn_minus.addEventListener('click', function (event) { return _this.decrement(event); });
+        btn_minus.addEventListener('touchstart', function (event) { return _this.decrement(event); });
         var btn_plus = this.pmInstance.querySelector('.plus-minus-button-plus');
-        btn_plus.onclick = function (e) {
-            console.log('click plus');
-            _this.increment();
-        };
+        btn_plus.addEventListener('click', function (event) { return _this.increment(event); });
+        btn_plus.addEventListener('touchstart', function (event) { return _this.increment(event); });
     };
-    PlusMinus.prototype.increment = function () {
-        if (this.counter < (this.values.length - 1)) {
-            this.counter++;
-            this.updateOutput();
-            console.log('increment counter = ' + this.counter);
+    PlusMinus.prototype.increment = function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        if (e.handled !== true) {
+            if (this.counter < (this.values.length - 1)) {
+                this.counter++;
+                this.updateOutput();
+            }
+            e.handled = true;
+        }
+        else {
+            return false;
         }
     };
-    PlusMinus.prototype.decrement = function () {
-        if (this.counter > 0) {
-            this.counter--;
-            this.updateOutput();
-            console.log('decrement counter = ' + this.counter);
+    PlusMinus.prototype.decrement = function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        if (e.handled !== true) {
+            if (this.counter > 0) {
+                this.counter--;
+                this.updateOutput();
+            }
+            e.handled = true;
+        }
+        else {
+            return false;
         }
     };
     PlusMinus.prototype.updateOutput = function () {
@@ -72,7 +82,6 @@ var PlusMinus = (function () {
         }
     };
     PlusMinus.prototype.notifyCallback = function () {
-        console.log('notify');
         if (this.callback) {
             this.callback('return val = ' + this.output);
         }

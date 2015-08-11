@@ -1,5 +1,3 @@
-"use strict";
-
 interface PlusMinusObj {
   element:string; // id of dom element
   values:string; // comma seperated string to convert to an array
@@ -35,6 +33,7 @@ class PlusMinus {
       this.sitetrackingkey = plusMinusObj.siteTrackingKey
       this.callback = plusMinusObj.cb;
       this.output = this.values[0];
+      this.pmInit = false;
 
       // initialise the component
       this.renderComponent(); // render the html for the component
@@ -46,56 +45,71 @@ class PlusMinus {
     private renderComponent():void {
         var descriptionHtml:string;
 
-        if (this.descriptionText !== '' || this.iconClassNames !== '') {
+        if (this.descriptionText && this.descriptionText !== '' || this.iconClassNames && this.iconClassNames !== '') {
           descriptionHtml = '<div class="plus-minus-description">';
           if (this.iconClassNames !== '') {
-            descriptionHtml += '<i class="icon icon-custom '+this.iconClassNames+'"></i>';
+            descriptionHtml += '<i class="'+this.iconClassNames+'"></i>';
           }
-          if (this.descriptionText !== '') {
+          if (this.descriptionText && this.descriptionText !== '') {
   					descriptionHtml += '<p class="plus-minus-description-text txt-default">'+this.descriptionText+'</p>';
   				}
           descriptionHtml += '</div>';
         }
 
-        this.pmInstance.insertAdjacentHTML('afterend', descriptionHtml);
 
         var componentHtml: string;
-        componentHtml = '<a href="#" class="plus-minus-button plus-minus-button-minus"><i class="icon icon-minus">-</i></a><input class="plus-minus-output" type="text" name="" value="" readonly="readonly"><a href="#" class="plus-minus-button plus-minus-button-plus"><i class="icon icon-plus">+</i></a>';
-        this.pmInstance.innerHTML = componentHtml;
+        componentHtml = '<div class="plus-minus-component"><a href="#" class="plus-minus-button plus-minus-button-minus"><i class="icon icon-minus"></i></a><input class="plus-minus-output" type="text" name="" value="" readonly="readonly"><a href="#" class="plus-minus-button plus-minus-button-plus"><i class="icon icon-plus"></i></a></div>';
+
+        // wrap plus/minus elements in containing wrapper
+        var wrapperHtml = '<div class="plus-minus">'+componentHtml+descriptionHtml+'</div>';
+
+        this.pmInstance.innerHTML = wrapperHtml;
     }
 
     private initEventHandlers():void {
       var btn_minus = this.pmInstance.querySelector('.plus-minus-button-minus');
-      btn_minus.onclick = (e) => {
-        console.log('click minus');
-        this.decrement();
-      }
+
+      btn_minus.addEventListener('click', event => this.decrement(event));
+      btn_minus.addEventListener('touchstart', event => this.decrement(event));
+
       var btn_plus = this.pmInstance.querySelector('.plus-minus-button-plus');
-      btn_plus.onclick = (e) => {
-        console.log('click plus');
-        this.increment();
-      }
+
+      btn_plus.addEventListener('click', event => this.increment(event));
+      btn_plus.addEventListener('touchstart', event => this.increment(event));
+
     }
 
     /**
       Increase the counter if valid and call updateOutput() to update input value
     **/
-    private increment():void {
-      if (this.counter < (this.values.length - 1)) {
-        this.counter++;
-        this.updateOutput();
-        console.log('increment counter = '+this.counter);
+    private increment(e):any {
+      e.stopPropagation();
+			e.preventDefault();
+			if(e.handled !== true) {
+        if (this.counter < (this.values.length - 1)) {
+          this.counter++;
+          this.updateOutput();
+        }
+      	e.handled = true;
+      } else {
+          return false;
       }
     }
 
     /**
       Decrease the counter if valid and call updateOutput() to update input value
     **/
-    private decrement():void {
-      if (this.counter > 0) {
-        this.counter--;
-        this.updateOutput();
-        console.log('decrement counter = '+this.counter);
+    private decrement(e):any {
+      e.stopPropagation();
+      e.preventDefault();
+      if(e.handled !== true) {
+        if (this.counter > 0) {
+          this.counter--;
+          this.updateOutput();
+        }
+        e.handled = true;
+      } else {
+        return false;
       }
     }
 
@@ -112,7 +126,6 @@ class PlusMinus {
       Return the value of output to the callback function
     **/
     private notifyCallback():void {
-      console.log('notify');
       if (this.callback) {
         this.callback('return val = '+this.output);
       }
